@@ -5,7 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { YoutubeApiModule } from './modules/youtube-api/youtube-api.module';
 import { YoutubeAuthModule } from './modules/youtube-auth/youtube-auth.module';
 
-dotenvConfig({ path: './.env.development' });
+dotenvConfig({ path: './.env.local' });
 
 @Module({
   imports: [

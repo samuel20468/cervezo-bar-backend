@@ -1,6 +1,6 @@
 import { config as dotenvConfig } from 'dotenv';
 
-dotenvConfig({ path: './.env.development' });
+dotenvConfig({ path: './.env.local' });
 
 //ACCESS PASSWORDS
 export const CLIENT_PASS: string = process.env.ACCESS_CLIENT_PASS;
