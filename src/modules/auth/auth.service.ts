@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { ADMIN_PASS, CLIENT_PASS } from 'src/utils/constants';
+import { ADMIN_PASS, CLIENT_PASS, ROLE } from 'src/utils/constants';
 import verifyPassword from 'src/helpers/verifyHashedPassword';
 import { JwtService } from '@nestjs/jwt';
 
@@ -16,13 +16,20 @@ export class AuthService {
 
     if (verifyClient) {
       const sessionId: string = uuidv4();
-      const payload = { sessionId, lastSongAdded: 0 };
+      const payload = {
+        sessionId,
+        lastSongAdded: 0,
+        roles: [ROLE.CLIENT],
+      };
       const accessToken = this.jwtService.sign(payload, { expiresIn: '2h' });
 
       return { accessToken };
     } else if (verifyAdmin) {
       const sessionId: string = uuidv4();
-      const payload = { sessionId };
+      const payload = {
+        sessionId,
+        roles: [ROLE.ADMIN],
+      };
       const accessToken = this.jwtService.sign(payload, { expiresIn: '1y' });
 
       return { accessToken };
