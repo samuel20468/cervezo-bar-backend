@@ -1,26 +1,46 @@
 import { Injectable } from '@nestjs/common';
 import { CreateYoutubeAuthDto } from './dto/create-youtube-auth.dto';
 import { UpdateYoutubeAuthDto } from './dto/update-youtube-auth.dto';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
+import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  GOOGLE_REDIRECT_URI,
+} from 'src/utils/constants';
 
 @Injectable()
 export class YoutubeAuthService {
-  create(createYoutubeAuthDto: CreateYoutubeAuthDto) {
-    return 'This action adds a new youtubeAuth';
+  private oauth2Client: OAuth2Client;
+
+  constructor() {
+    this.oauth2Client = new google.auth.OAuth2(
+      GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET,
+      GOOGLE_REDIRECT_URI,
+    );
   }
 
-  findAll() {
-    return `This action returns all youtubeAuth`;
+  getAuthUrl() {
+    const scopes = [
+      'https://www.googleapis.com/auth/youtube',
+      'https://www.googleapis.com/auth/youtube.force-ssl',
+      'https://www.googleapis.com/auth/youtubepartner',
+    ];
+
+    return this.oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: scopes,
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} youtubeAuth`;
+  async getTokens(code: string) {
+    const { tokens } = await this.oauth2Client.getToken(code);
+    this.oauth2Client.setCredentials(tokens);
+    return tokens;
   }
 
-  update(id: number, updateYoutubeAuthDto: UpdateYoutubeAuthDto) {
-    return `This action updates a #${id} youtubeAuth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} youtubeAuth`;
+  async getAuthenticatedClient() {
+    return this.oauth2Client;
   }
 }
