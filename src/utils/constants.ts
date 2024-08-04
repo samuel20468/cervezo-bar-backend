@@ -7,6 +7,9 @@ export const CLIENT_PASS: string = process.env.ACCESS_CLIENT_PASS;
 export const ADMIN_PASS: string = process.env.ACCESS_ADMIN_PASS;
 export const JWT_SECRET: string = process.env.JWT_SECRET;
 
+//CRYPTO SECRET KEY
+export const ENCRYPTION_KEY: string = process.env.ENCRYPTION_KEY;
+
 //OAUTH STRATEGY
 export const GOOGLE_CLIENT_ID: string = process.env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET: string = process.env.GOOGLE_CLIENT_SECRET;

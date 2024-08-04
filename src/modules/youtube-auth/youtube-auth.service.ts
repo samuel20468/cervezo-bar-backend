@@ -1,27 +1,27 @@
-//Nest importations
+// Nest importations
 import { Injectable } from '@nestjs/common';
 
-//Depedencies importations
+// Dependencies importations
 import axios from 'axios';
 import * as fs from 'fs';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 
-//Application variables importations
+// Application variables importations
 import {
   GOOGLE_CLIENT_ID,
   GOOGLE_CLIENT_SECRET,
   GOOGLE_REDIRECT_URI,
 } from 'src/utils/constants';
 
-//Application helpers
+// Application helpers
 import { decrypt, encrypt } from 'src/helpers/encrypt-decryptToken';
 import { IYoutubeTokens } from 'src/utils/types';
 
 @Injectable()
 export class YoutubeAuthService {
   private oauth2Client: OAuth2Client;
-  private configFile: string = './src/config/config.json';
+  private configFile: string = './src/config/config.enc';
 
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
@@ -32,19 +32,50 @@ export class YoutubeAuthService {
   }
 
   getConfig(): IYoutubeTokens {
-    const encryptedData = fs.readFileSync(this.configFile, 'utf8');
-    const data = decrypt(encryptedData);
-    return JSON.parse(data);
+    try {
+      const encryptedData = fs.readFileSync(this.configFile, 'utf8');
+
+      const data = decrypt(encryptedData);
+
+      console.log(data);
+      if (!data) {
+        throw new Error('Decrypted data is undefined');
+      }
+
+      return JSON.parse(data);
+    } catch (error) {
+      throw new Error(`Failed to read config: ${error.message}`);
+    }
   }
 
-  updateConfig(newAccessToken: string, newRefreshToken: string) {
-    const config = this.getConfig();
-    config.youtube.access_token = newAccessToken;
-    config.youtube.refresh_token = newRefreshToken;
-    const data = JSON.stringify(config, null, 2);
-    const encryptedData = encrypt(data);
-    fs.writeFileSync(this.configFile, encryptedData, 'utf8');
+  saveConfig(accessToken: string, refreshToken: string) {
+    try {
+      const config = {
+        youtube: {
+          acccess_token: accessToken,
+          refresh_token: refreshToken,
+        },
+      };
+      const data = JSON.stringify(config, null, 2);
+      const encryptedData = encrypt(data);
+      fs.writeFileSync(this.configFile, encryptedData, 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to save config: ${error.message}`);
+    }
   }
+
+  updateConfig(newAccessToken: string) {
+    try {
+      const config = this.getConfig();
+      config.youtube.access_token = newAccessToken;
+      const data = JSON.stringify(config, null, 2);
+      const encryptedData = encrypt(data);
+      fs.writeFileSync(this.configFile, encryptedData, 'utf8');
+    } catch (error) {
+      throw new Error(`Failed to update config: ${error.message}`);
+    }
+  }
+
   getAuthUrl() {
     const scopes = [
       'https://www.googleapis.com/auth/youtube',
@@ -59,9 +90,16 @@ export class YoutubeAuthService {
   }
 
   async getTokens(code: string) {
-    const { tokens } = await this.oauth2Client.getToken(code);
-    this.oauth2Client.setCredentials(tokens);
-    return tokens;
+    try {
+      const { tokens } = await this.oauth2Client.getToken(code);
+      this.oauth2Client.setCredentials(tokens);
+      console.log(tokens);
+
+      this.saveConfig(tokens.access_token, tokens.refresh_token);
+      return tokens;
+    } catch (error) {
+      throw new Error(`Failed to save tokens: ${error.message}`);
+    }
   }
 
   async getAuthenticatedClient() {
@@ -80,11 +118,13 @@ export class YoutubeAuthService {
         refresh_token: config.youtube.refresh_token,
       });
 
-      const { access_token, refresh_token } = response.data;
+      const { access_token } = response.data;
 
-      this.updateConfig(access_token, refresh_token);
+      this.updateConfig(access_token);
+
+      return response.data;
     } catch (error) {
-      throw Error(error.message);
+      throw new Error(`Failed to refresh access token: ${error.message}`);
     }
   }
 }

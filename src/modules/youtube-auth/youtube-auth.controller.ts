@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Redirect } from '@nestjs/common';
+import { Controller, Get, Post, Query, Redirect } from '@nestjs/common';
 import { YoutubeAuthService } from './youtube-auth.service';
 
 @Controller('youtube-auth')
@@ -18,5 +18,10 @@ export class YoutubeAuthController {
     const tokens = await this.youtubeService.getTokens(code);
 
     return { tokens };
+  }
+
+  @Post('refresh-token')
+  refreshToken() {
+    return this.youtubeService.refreshAcessToken();
   }
 }
